@@ -126,7 +126,7 @@ struct TopSurf : public UnstructuredGrid {
 	 * }
 	 * @endcode
 	 */
-	boost::iterator_range <const int*> column (int ndx_2d);
+	boost::iterator_range <const int*> column (const int ndx_2d) const;
 
 private:
 	/**

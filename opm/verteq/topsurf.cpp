@@ -18,36 +18,15 @@ using namespace boost;
 using namespace Opm;
 using namespace std;
 
-/**
- * Generic run-length iterator.
- *
- * @param ndx Index of the range to find, e.g. a column.
- *
- * @param pos Array containing accumulated counts for each range,
- * e.g. col_collpos.
- *
- * @param values Array containing the values for every range,
- * concatenated into one huge array, e.g. col_cells.
- *
- * @return Iterator that can be used to iterate through all values
- * only in the specified range, e.g. cells in a column.
- */
-template <typename T> iterator_range <const T*>
-run_len_iter (const int ndx, const int* const& pos, const T* const& values) {
-	// skip all the values that belongs to ranges before us,
-	// then we get to the start of our own range
-	const T* begin_addr = &values [pos [ndx]];
+iterator_range <const int *>
+TopSurf::column (const int ndx_2d) const {
+    return boost::iterator_range <const int *> (
+        // skip all the values that belongs to ranges before us,
+        // then we get to the start of our own range
+        &col_cells [col_cellpos [ndx_2d]],
 
-	// stop when we arrive at the start of the next range
-	const T* end_addr = &values [pos [ndx + 1]];
-
-	// return an iterator over this
-	return iterator_range <const T *> (begin_addr, end_addr);
-}
-
-iterator_range <const int*>
-TopSurf::column (int ndx_2d) {
-	return run_len_iter <const int> (ndx_2d, this->col_cellpos, this->col_cells);
+        // stop when we arrive at the start of the next range
+        &col_cells [col_cellpos [ndx_2d + 1]]);
 }
 
 /// Helper routine to print of map
