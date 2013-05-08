@@ -1,5 +1,6 @@
 // Copyright (C) 2013 Uni Research AS
 // This file is licensed under the GNU General Public License v3.0
+#include <opm/verteq/mapping.hpp>
 #include <opm/verteq/topsurf.hpp>
 #include <opm/verteq/verteq.hpp>
 #include <opm/core/utility/parameters/ParameterGroup.hpp>
@@ -17,6 +18,7 @@ struct VertEqImpl : public VertEq {
 	virtual const UnstructuredGrid& grid();
 
 	auto_ptr <TopSurf> ts;
+	auto_ptr <UpscaleMapping> map;
 };
 
 VertEq*
@@ -33,6 +35,7 @@ void
 VertEqImpl::init(const UnstructuredGrid& fullGrid) {
 	// generate a two-dimensional upscaling as soon as we get the grid
 	ts = auto_ptr <TopSurf> (TopSurf::create (fullGrid));
+	map = auto_ptr <UpscaleMapping> (new UpscaleMapping (fullGrid, *ts));
 }
 
 const UnstructuredGrid&
