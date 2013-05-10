@@ -13,6 +13,8 @@ struct UnstructuredGrid;
 
 namespace Opm {
 
+struct IncompPropertiesInterface;
+
 namespace parameter {
 struct ParameterGroup;
 } // namespace parameter
@@ -58,7 +60,8 @@ public:
 	 */
 	static VertEq* create (const std::string& title,
 												 const Opm::parameter::ParameterGroup& args,
-												 const UnstructuredGrid& fullGrid);
+												 const UnstructuredGrid& fullGrid,
+												 const IncompPropertiesInterface& fullProps);
 
 	// virtual destructor, actual functionality relayed to real impl.
 	virtual ~VertEq () {}
@@ -74,6 +77,18 @@ public:
 	 *
 	 */
 	virtual const UnstructuredGrid& grid () = 0;
+
+	/**
+	 * @brief props Accessor method for the upscaled "fluid" objects
+	 *
+	 * This method is inexpensive; upscaling is not done upon every
+	 * invocation.
+	 *
+	 * @return Rock and hydrological properties that may be passed
+	 *         other components in the simulator. You do NOT own this
+	 *         object!
+	 */
+	virtual const IncompPropertiesInterface& props () = 0;
 };
 
 } // namespace Opm

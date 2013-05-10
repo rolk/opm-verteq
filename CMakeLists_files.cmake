@@ -29,6 +29,7 @@ list (APPEND MAIN_SOURCE_FILES
 	opm/core/utility/exc.cpp
 	opm/verteq/mapping.cpp
 	opm/verteq/nav.cpp
+	opm/verteq/props.cpp
 	opm/verteq/topsurf.cpp
 	opm/verteq/verteq.cpp
 	)
