@@ -5,9 +5,9 @@
 // This file is licensed under the GNU General Public License v3.0
 
 /* common visibility macros */
-#ifndef OPM_CORE_VISIBILITY_INCLUDED
-#include <opm/core/utility/visibility.h>
-#endif /* OPM_CORE_VISIBILITY_INCLUDED */
+#ifndef OPM_VERTEQ_VISIBILITY_INCLUDED
+#include <opm/verteq/utility/visibility.h>
+#endif /* OPM_VERTEQ_VISIBILITY_INCLUDED */
 
 /* special visibility macros for this module */
 #if defined(opmverteq_EXPORTS)

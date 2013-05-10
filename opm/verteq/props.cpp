@@ -1,5 +1,5 @@
 #include <opm/verteq/props.hpp>
-#include <opm/core/utility/exc.hpp>
+#include <opm/verteq/utility/exc.hpp>
 #include <opm/core/grid.h>
 #include <opm/verteq/mapping.hpp>
 #include <opm/verteq/topsurf.hpp>
