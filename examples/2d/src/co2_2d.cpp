@@ -40,21 +40,25 @@ int main (int argc, char *argv[]) {
 	const GridManager gridMan (parser);
 	const UnstructuredGrid& fine_grid = *gridMan.c_grid ();
 
-	// upscale to a top surface
-	scoped_ptr <VertEq> ve (VertEq::create (title, param, fine_grid));
-	const UnstructuredGrid& grid = ve->grid ();
-
 	// extract fluid, rock and two-phase properties from the parse tree
-	IncompPropertiesFromDeck fluid (parser, grid);
+	IncompPropertiesFromDeck fine_fluid (parser, fine_grid);
 
 	// initial state of the reservoir
 	const double gravity [] = { 0., 0., Opm::unit::gravity };
 	TwophaseState state;
-	initStateFromDeck (grid, fluid, parser, gravity [3], state);
+	initStateFromDeck (fine_grid, fine_fluid, parser, gravity [3], state);
 
 	// setup wells from input, using grid and rock properties read earlier
-	WellsManager wells (parser, fine_grid, fluid.permeability());
+	WellsManager wells (parser, fine_grid, fine_fluid.permeability());
 	WellState wellState; wellState.init (wells.c_wells(), state);
+
+	// upscale to a top surface
+	scoped_ptr <VertEq> ve (VertEq::create (title,
+																					param,
+																					fine_grid,
+																					fine_fluid));
+	const UnstructuredGrid& grid = ve->grid ();
+	const IncompPropertiesInterface& fluid = ve->props ();
 
 	// no sources and no-flow boundary conditions
 	vector <double> src (grid.number_of_cells, 0.);
