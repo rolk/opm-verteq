@@ -27,7 +27,7 @@
 # find opm -name '*.c*' -printf '\t%p\n' | sort
 list (APPEND MAIN_SOURCE_FILES
 	opm/verteq/utility/exc.cpp
-	opm/verteq/utility/iter.cpp
+	opm/verteq/utility/runlen.cpp
 	opm/verteq/mapping.cpp
 	opm/verteq/nav.cpp
 	opm/verteq/props.cpp
