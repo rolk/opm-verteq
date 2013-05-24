@@ -6,6 +6,13 @@
 
 #include <vector>
 
+#ifndef OPM_VERTEQ_RUNLEN_HPP_INCLUDED
+#include <opm/verteq/utility/runlen.hpp>
+#endif
+#ifndef OPM_VERTEQ_NAV_HPP_INCLUDED
+#include <opm/verteq/nav.hpp>
+#endif
+
 // forward declarations
 struct UnstructuredGrid;
 
@@ -56,6 +63,43 @@ struct UpscaleMapping {
 	void vol_avg (const double* fine_data, int fine_ofs, int fine_stride,
                   double* col_data, int col_ofs, int col_stride) const;
 protected:
+    /**
+     * Fine-grid block number for each element in each column.
+     */
+    RunLenView <int> blk_id;
+
+    /**
+     * Height of each block individually, defined as the z-difference
+     * between the center of the top face and the center of the bottom face.
+     */
+    RunLenData <double> hgt;
+
+    /**
+     * Accumulated height from the top surface of the column down to the
+     * bottom of each cell. The accumulated height of the last element in
+     * the column is thus the total height of the column.
+     */
+    RunLenData <double> acc_hgt;
+
+    /**
+     * Specific face number of a given side of an element.
+     *
+     * @param glob_elem_id Element index in the fine grid.
+     * @param s Side to locate
+     * @return Index of the face of the element which is this side
+     *
+     * @see Opm::UP, Opm::DOWN
+     */
+    int find_face (int glob_elem_id, const Side3D& s);
+
+    /**
+     * Height of a particular element.
+     *
+     * @param glob_elem_id Element index in the fine grid.
+     * @return Difference between center of top and bottom face.
+     */
+    double find_height (int glob_elem_id);
+
 	/**
 	 * Accumulated volume from top of column and down to including this
 	 * fine grid element.
