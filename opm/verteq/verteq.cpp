@@ -38,7 +38,7 @@ struct VertEqImpl : public VertEq {
 	           const Wells* wells,
 	           const vector<double>& fullSrc,
 	           const FlowBoundaryConditions* fullBcs,
-	           const double* gravity);
+	           const double* fullGravity);
 	// public methods defined in the interface
 	virtual const UnstructuredGrid& grid();
 	virtual const Wells* wells();
@@ -65,6 +65,10 @@ struct VertEqImpl : public VertEq {
 	// boundary conditions
 	void assert_noflow (const FlowBoundaryConditions* bcs);
 	virtual const FlowBoundaryConditions* bcs ();
+
+	// gravity
+	const double* grav_vec;
+	virtual const double* gravity ();
 };
 
 VertEq*
@@ -75,10 +79,10 @@ VertEq::create (const string& title,
                 const Wells* wells,
                 const vector<double>& fullSrc,
                 const FlowBoundaryConditions* fullBcs,
-                const double* gravity) {
+                const double* fullGravity) {
 	// we don't provide any parameters to do tuning yet
 	auto_ptr <VertEqImpl> impl (new VertEqImpl ());
-	impl->init (fullGrid, fullProps, wells, fullSrc, fullBcs, gravity);
+	impl->init (fullGrid, fullProps, wells, fullSrc, fullBcs, fullGravity);
 	return impl.release();
 }
 
@@ -88,10 +92,13 @@ VertEqImpl::init(const UnstructuredGrid& fullGrid,
                  const Wells* wells,
                  const vector<double>& fullSrc,
                  const FlowBoundaryConditions* fullBcs,
-                 const double* gravity) {
+                 const double* fullGravity) {
+	// store a pointer to the original gravity vector passed to us
+  grav_vec = fullGravity;
+
 	// generate a two-dimensional upscaling as soon as we get the grid
 	ts = auto_ptr <TopSurf> (TopSurf::create (fullGrid));
-	pr = auto_ptr <VertEqProps> (VertEqProps::create (fullProps, *ts, gravity));
+	pr = auto_ptr <VertEqProps> (VertEqProps::create (fullProps, *ts, grav_vec));
 	// create a separate, but identical, list of wells we can work on
 	w = clone_wells(wells);
 	translate_wells ();
@@ -104,6 +111,13 @@ VertEqImpl::init(const UnstructuredGrid& fullGrid,
 	assert_noflow (fullBcs);
 	// rely on the fact that no boundary conditions means no-flow
 	bnd_cond = flow_conditions_construct (0);
+}
+
+const double*
+VertEqImpl::gravity () {
+	// simply return the original two first items; the underlaying simulator
+	// cannot "see" the last dimension, because it only know of two elements.
+	return grav_vec;
 }
 
 const FlowBoundaryConditions*
