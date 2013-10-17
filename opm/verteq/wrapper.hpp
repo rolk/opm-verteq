@@ -107,6 +107,24 @@ public:
 	 */
 	void sync ();
 
+	/**
+	 * Turn auto synchronization on or off.
+	 *
+	 * The default is to automatically synchronize, because if we have access
+	 * to the wrapper, we can easily turn it off. If we don't have access, it
+	 * is probably because the type and not the instance of the wrapper have
+	 * been passed, and then we also probably want to do this automatically
+	 * because we are a drop-in replacement for the real simulator.
+	 *
+	 * @param autoSync True if the wrapper should automatically synchronize
+	 *                 the state in every timestep (default). Setting this
+	 *                 off may yield better performance if the simulator is
+	 *                 not supposed to report at every timestep.
+	 *
+	 * @return This object, so it can be used in a call chain.
+	 */
+	VertEqWrapperBase& setAutoSync (bool autoSync);
+
 private:
 	// underlaying simulator to use for 2D
 	std::unique_ptr <Simulator> sim;
@@ -127,6 +145,10 @@ private:
 	// flag that determines whether we have synced or not
 	bool syncDone;
 	void resetSyncFlag ();
+
+	// flag that determines whether we should always sync or not
+	bool autoSync;
+	void doAutoSync ();
 };
 
 /**
@@ -169,6 +191,12 @@ struct OPM_VERTEQ_PUBLIC VertEqWrapper : public VertEqWrapperBase {
 		                       new SimulatorAdapter <SimulatorType> ()),
 		                     param, grid, props, rock_comp_props, wells_manager,
 		                     src, bcs, linsolver, gravity) {
+	}
+
+	/// Covariant version to not erase type info in the call chain
+	VertEqWrapper <SimulatorType>& setAutoSync (bool autoSync) {
+		VertEqWrapperBase::setAutoSync (autoSync);
+		return *this;
 	}
 };
 

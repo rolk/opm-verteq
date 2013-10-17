@@ -40,7 +40,8 @@ VertEqWrapperBase::VertEqWrapperBase (
 	, timestep_callbacks (new EventSource ())
 	, fineState (0)
 	, coarseState (0)
-	, syncDone (false) {
+	, syncDone (false)
+	, autoSync (true) {
 
 	// VE model that is injected in between the fine-scale
 	// model that is sent to us, and the simulator
@@ -82,6 +83,20 @@ VertEqWrapperBase::timestep_completed () {
 	return *timestep_callbacks;
 }
 
+VertEqWrapperBase&
+VertEqWrapperBase::setAutoSync (bool autoSync) {
+	this->autoSync = autoSync;
+	return *this;
+}
+
+void
+VertEqWrapperBase::doAutoSync () {
+	// sync on behalf of the clients if the flag is set
+	if (this->autoSync) {
+		this->sync ();
+	}
+}
+
 void
 VertEqWrapperBase::resetSyncFlag () {
 	this->syncDone = false;
@@ -111,6 +126,12 @@ VertEqWrapperBase::run(
 	// ve model whenever an update is completed and its state is stable
 	sim->timestep_completed ()
 	    .add <VertEqState, &VertEqState::notify> (upscaled_state);
+
+	// if the client has requested that the state should always be
+	// synchronized, then do it now before we call any of the custom
+	// callbacks (but after statistics have been updated)
+	sim->timestep_completed ()
+	    .add <VertEqWrapperBase, &VertEqWrapperBase::doAutoSync> (*this);
 
 	// add everyone that has registered at us to be notified by the
 	// inner simulator as well (on our behalf); this daisy chains the
