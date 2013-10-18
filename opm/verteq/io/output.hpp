@@ -21,13 +21,14 @@ class UnstructuredGrid;
 
 namespace Opm {
 
-// forward declaration
+// forward declarations from opm-core
 class SimulatorTimer;
 
 namespace parameter {
 class ParameterGroup;
 }
 
+// forward declaration due to mutual relationship
 struct OutputFormat;
 
 /**
@@ -51,7 +52,6 @@ struct OPM_VERTEQ_PUBLIC OutputWriter {
 	virtual void write (UnstructuredGrid& g,
 	                      DataMap& d,
 	                      SimulatorTimer& t) = 0;
-
 
 	/**
 	 * Create an output writer which fits the suggestions from the user,
