@@ -4,6 +4,7 @@
 // Copyright (C) 2013 Uni Research AS
 // This file is licensed under the GNU General Public License v3.0
 
+#include <functional> // function
 #include <memory>  // unique_ptr
 #include <vector>
 
@@ -23,6 +24,7 @@ namespace Opm {
 
 // forward declarations from opm-core
 class SimulatorTimer;
+class TwophaseState;
 
 namespace parameter {
 class ParameterGroup;
@@ -90,6 +92,74 @@ struct OPM_VERTEQ_PUBLIC OutputFormat {
 
 	/// Create a new writer to dump files based on locations in the parameters
 	virtual std::unique_ptr <OutputWriter> create (parameter::ParameterGroup& p) const = 0;
+};
+
+/**
+ * Encapsulate output writing from simulators. This is an object so
+ * that it can hold curried arguments.
+ *
+ * @example
+ * @code{.cpp}
+ *	// state ends up here
+ *	TwophaseState state;
+ *
+ *	// timestep ends up here
+ *	SimulatorTimer timer;
+ *
+ *	// set up simulation
+ *	SimulatorIncompTwophase sim (param, grid, ... );
+ *
+ *	// use this to dump state to disk
+ *	SimulationOutputter output (param, grid, timer, state);
+ *
+ *	// connect simulation with output writer
+ *	sim.timestep_completed ().add (output);
+ *
+ *	// start simulation
+ *	sim.run (timer, state, ... )
+ * @endcode
+ *
+ * @todo
+ * This functionality could be incorporated directly into a simulator
+ * object.
+ */
+class OPM_VERTEQ_PUBLIC SimulationOutputter {
+	/**
+	 * Curry arguments for the output writer. These arguments are passed
+	 * to the simulator, but is not passed on to the event handler so it
+	 * need to pick them up from the object members.
+	 *
+	 * @note
+	 * The lifetime of the objects passed must encompass the lifetime of
+	 * this object, i.e. assume that this object refer to them at any time.
+	 */
+	SimulationOutputter (parameter::ParameterGroup& p,
+	                     UnstructuredGrid& g,
+	                     SimulatorTimer& t,
+	                     TwophaseState& s);
+
+	/**
+	 * Conversion operator which allows the object to be directly passed
+	 * into an Event and used as a handler.
+	 *
+	 * @see Opm::SimulatorIncompTwophase::timestep_completed
+	 */
+	operator std::function <void ()> ();
+
+protected:
+	/// Just hold a reference to these objects that are owned elsewhere.
+	UnstructuredGrid& grid_;
+	SimulatorTimer& timer_;
+
+	/// Created locally and destructed together with us
+	std::unique_ptr <DataMap> state_;
+	std::unique_ptr <OutputWriter> handler_;
+
+	/// Wrap the applicable fields of a state in a data map (used by the writers)
+	static std::unique_ptr <DataMap> mapState (const TwophaseState& state);
+
+	/// Call the writers that were created based on the parameters
+	virtual void writeOutput ();
 };
 
 } /* namespace Opm */

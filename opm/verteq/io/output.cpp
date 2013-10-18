@@ -17,6 +17,7 @@
 #pragma clang diagnostic ignored "-Wmismatched-tags"
 #endif /* __clang__ */
 #include <opm/core/io/eclipse/writeECLData.hpp>
+#include <opm/core/simulator/TwophaseState.hpp>
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif /* __clang__ */
@@ -140,4 +141,43 @@ OutputWriter::create (
 		return unique_ptr <OutputWriter> (
 		      new MultiplexOutputWriter (std::move (list)));
 	}
+}
+
+/// Predefined keys
+static const string PRESSURE = "pressure";
+static const string SATURATION = "saturation";
+
+/// Helper function to map from the state given by the simulator to the
+/// data structure needed by the writer objects.
+unique_ptr <DataMap>
+SimulationOutputter::mapState (const TwophaseState& state) {
+	unique_ptr <DataMap> map (new DataMap ());
+	map->insert (DataMap::value_type (PRESSURE, &state.pressure ()));
+	map->insert (DataMap::value_type (SATURATION, &state.saturation ()));
+	return map;
+}
+
+SimulationOutputter::SimulationOutputter (ParameterGroup& p,
+                                          UnstructuredGrid& g,
+                                          SimulatorTimer& t,
+                                          TwophaseState& s)
+	// store all parameters passed into the object, making them curried
+	// parameters to the writeOutput function. the parameters are processed
+	// once and for all here; we don't setup a new chain in every timestep!
+	: grid_ (g)
+	, timer_ (t)
+	, state_ (std::move (mapState (s)))
+	, handler_ (std::move (OutputWriter::create (OutputFormat::ALL, p))) {
+}
+
+SimulationOutputter::operator std::function <void ()> () {
+	// return (a pointer to) the writeOutput() function as an object which
+	// can be passed to the event available from the simulator
+	return std::bind (&SimulationOutputter::writeOutput, std::ref (*this));
+}
+
+void
+SimulationOutputter::writeOutput () {
+	// relay the request to the handlers (setup in the constructor from parameters)
+	handler_->write (this->grid_, *(this->state_), this->timer_);
 }
